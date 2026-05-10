@@ -1098,30 +1098,41 @@ const SM = {
 
 // ── Image load helpers (named functions avoid inline quote escaping issues) ──
 function imgLoaded(imgEl, loaderId) {
+  // WordPress mshots returns a small grey placeholder while rendering
+  // Detect it by checking natural dimensions — placeholder is exactly 400x300 or very small
+  if (imgEl.naturalWidth <= 400 && imgEl.naturalHeight <= 300) {
+    // Still a placeholder — retry after 3 seconds
+    var url     = imgEl.dataset.shotUrl;
+    var attempts = parseInt(imgEl.dataset.attempts || "0") + 1;
+    imgEl.dataset.attempts = attempts;
+    if (attempts < 8 && url) {
+      setTimeout(function() {
+        imgEl.src = "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(url) + "?w=1200&h=800&cb=" + Date.now();
+      }, 3000);
+    } else {
+      imgEl.style.display = 'none';
+      var l = document.getElementById(loaderId);
+      if (l) l.innerHTML = '⚠ Screenshot timed out — <a href="' + url + '" target="_blank" style="color:#d4f700;text-decoration:underline">open page ↗</a>';
+    }
+    return;
+  }
+  // Real screenshot loaded
   imgEl.classList.add('loaded');
   var l = document.getElementById(loaderId);
   if (l) l.style.display = 'none';
 }
 function imgFailed(imgEl, loaderId, msg) {
-  // Try next screenshot service before giving up
   var url = imgEl.dataset.shotUrl;
-  var t   = imgEl.dataset.shotT;
-  var idx = parseInt(imgEl.dataset.serviceIndex || "0") + 1;
-  if (url && t && idx < SHOT_SERVICES.length) {
-    imgEl.dataset.serviceIndex = idx;
-    imgEl.src = SHOT_SERVICES[idx](url, t);
-    return;
-  }
   imgEl.style.display = 'none';
   var l = document.getElementById(loaderId);
-  if (l) l.innerHTML = msg || '⚠ Screenshot unavailable';
+  if (l) l.innerHTML = '⚠ Screenshot unavailable' + (url ? ' — <a href="' + url + '" target="_blank" style="color:#d4f700;text-decoration:underline">open page ↗</a>' : '');
 }
 
 // ── Page preview (shown immediately when monitor is added) ───────────────────
 function buildPreviewHtml(m) {
   if (!m.previewTime) return "";
   if (m.status === "changed") return "";
-  var src    = shotUrl(m.url, m.previewTime);
+  var src    = shotUrl(m.url);
   var loadId = "prev-load-" + m.id;
   var imgId  = "prev-img-"  + m.id;
   return '<div class="card-preview">'
@@ -1129,7 +1140,7 @@ function buildPreviewHtml(m) {
     + '<div class="card-preview-img-wrap">'
     +   '<div class="card-preview-loading" id="' + loadId + '"><span class="spin">◌</span> Loading preview…</div>'
     +   '<img class="card-preview-img" id="' + imgId + '" src="' + src + '" alt="Page preview" '
-    +     'data-shot-url="' + m.url + '" data-shot-t="' + m.previewTime + '" data-service-index="0" '
+    +     'data-shot-url="' + m.url + '" data-attempts="0" '
     +     'onload="imgLoaded(this,' + JSON.stringify(loadId) + ')" '
     +     'onerror="imgFailed(this,' + JSON.stringify(loadId) + ')" />'
     + '</div>'
@@ -1137,41 +1148,36 @@ function buildPreviewHtml(m) {
 }
 
 // ── Screenshot ───────────────────────────────────────────────────────────────
-// Screenshot services tried in order — first to load wins
-var SHOT_SERVICES = [
-  function(url, t) { return "https://image.thum.io/get/width/1200/crop/800/noanimate/" + url + "?t=" + t; },
-  function(url, t) { return "https://api.screenshotone.com/take?url=" + encodeURIComponent(url) + "&viewport_width=1280&viewport_height=800&format=jpg&t=" + t; },
-  function(url, t) { return "https://shot.screenshotapi.net/screenshot?token=&url=" + encodeURIComponent(url) + "&width=1280&height=800&output=image&t=" + t; },
-  function(url, t) { return "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(url) + "?w=1200&t=" + t; },
-];
-
-function shotUrl(url, t) {
-  // Default to first service; fallback handled by imgFailed
-  return SHOT_SERVICES[0](url, t);
+// Screenshot via WordPress mshots — free, no key, very reliable
+// First request generates the shot (returns placeholder), second request returns real image
+// We poll every 3 seconds up to 5 times until the real image loads
+function shotUrl(url) {
+  return "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(url) + "?w=1200&h=800";
 }
 
-// Try next screenshot service if current one fails
-function tryNextShot(imgEl, loaderId, url, t, serviceIndex) {
-  serviceIndex = serviceIndex || 1;
-  if (serviceIndex >= SHOT_SERVICES.length) {
+function pollShot(imgEl, loaderId, url, attempts) {
+  attempts = attempts || 0;
+  if (attempts > 8) {
+    // Give up — show fallback
     imgEl.style.display = 'none';
     var l = document.getElementById(loaderId);
-    if (l) l.innerHTML = '⚠ Screenshot unavailable — <a href="' + url + '" target="_blank" style="color:#d4f700">open page</a>';
+    if (l) l.innerHTML = '⚠ Screenshot timed out — <a href="' + url + '" target="_blank" style="color:#d4f700;text-decoration:underline">open page directly ↗</a>';
     return;
   }
-  imgEl.src = SHOT_SERVICES[serviceIndex](url, t);
-  imgEl.dataset.serviceIndex = serviceIndex;
+  // Bust cache to force a fresh check
+  var sep = url.indexOf('?') >= 0 ? '&' : '?';
+  imgEl.src = "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(url) + "?w=1200&h=800&cb=" + (Date.now());
 }
 
-function shotPanel(label, cssClass, url, t, panelId) {
+function shotPanel(label, cssClass, url, panelId) {
   var loadId = panelId + "-load";
   var imgId  = panelId + "-img";
   return '<div class="screenshot-panel">'
     + '<div class="screenshot-panel-label ' + cssClass + '">' + label + '</div>'
     + '<div class="screenshot-img-wrap">'
-    +   '<div class="screenshot-loading" id="' + loadId + '"><span class="spin">◌</span> Loading…</div>'
-    +   '<img class="screenshot-img" id="' + imgId + '" src="' + shotUrl(url, t) + '" alt="screenshot" '
-    +     'data-shot-url="' + url + '" data-shot-t="' + t + '" data-service-index="0" '
+    +   '<div class="screenshot-loading" id="' + loadId + '"><span class="spin">◌</span> Generating screenshot…</div>'
+    +   '<img class="screenshot-img" id="' + imgId + '" src="' + shotUrl(url) + '" alt="screenshot" '
+    +     'data-shot-url="' + url + '" data-attempts="0" '
     +     'onload="imgLoaded(this,' + JSON.stringify(loadId) + ')" '
     +     'onerror="imgFailed(this,' + JSON.stringify(loadId) + ')" />'
     + '</div>'
@@ -1187,8 +1193,8 @@ function buildScreenshotHtml(m) {
   return '<div class="card-screenshot">'
     + '<div class="screenshot-label">📸 Before & After <span>page captured at each stage</span></div>'
     + '<div class="screenshot-panels">'
-    +   shotPanel("⬜ Before — " + beforeStr, "before", m.url, beforeT, "shot-before-" + m.id)
-    +   shotPanel("🔴 After — " + afterStr,  "after",  m.url, afterT,  "shot-after-"  + m.id)
+    +   shotPanel("⬜ Before — " + beforeStr, "before", m.url, "shot-before-" + m.id)
+    +   shotPanel("🔴 After — " + afterStr,  "after",  m.url, "shot-after-"  + m.id)
     + '</div>'
     + '<div class="screenshot-footer">'
     +   '<span>Drop detected at ' + afterStr + '</span>'
