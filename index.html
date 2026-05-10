@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DROP/WATCH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Inter+Tight:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --bg: #080808;
+  --surf: #111111;
+  --surf2: #161616;
+  --brd: #222222;
+  --brd2: #2e2e2e;
+  --yellow: #d4f700;
+  --red: #ff3a3a;
+  --green: #00e676;
+  --muted: #555555;
+  --dim: #888888;
+  --text: #eeeeee;
+  --warn: #ff9f1c;
+  --display: 'Inter Tight', 'Inter', system-ui, sans-serif;
+  --sans:    'Inter', system-ui, -apple-system, sans-serif;
+  --mono:    'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ── Header ── */
+.header {
+  background-color: var(--surf);
+  border-bottom: 1px solid var(--brd);
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.logo {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 6px;
+  color: var(--yellow);
+  text-transform: uppercase;
+}
+
+.pulse-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--brd2);
+}
+
+.pulse-dot.on {
+  background-color: var(--green);
+  box-shadow: 0 0 6px var(--green);
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── Ticker ── */
+.ticker-wrap {
+  overflow: hidden;
+  background-color: var(--surf2);
+  border-bottom: 1px solid var(--brd);
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-inner {
+  display: inline-flex;
+  white-space: nowrap;
+  gap: 40px;
+  animation: ticker 30s linear infinite;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.ticker-inner em {
+  color: var(--yellow);
+  font-style: normal;
+}
+
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ── Main ── */
+.main {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+/* ── Banner ── */
+.banner {
+  background-color: #110e00;
+  border: 1px solid #332800;
+  border-left: 3px solid var(--warn);
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--warn);
+}
+
+.banner.hidden { display: none; }
+
+.banner-btn {
+  background-color: transparent;
+  border: none;
+  color: var(--warn);
+  font-family: var(--mono);
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ── Proxy bar ── */
+.proxy-bar {
+  background-color: var(--surf);
+  border: 1px solid var(--brd);
+  border-left: 3px solid var(--muted);
+  padding: 10px 14px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.proxy-bar.ok   { border-left-color: var(--green); color: var(--green); }
+.proxy-bar.fail { border-left-color: var(--red);   color: var(--red);   }
+
+/* ── Tip box ── */
+.tip-box {
+  background-color: #0c0c00;
+  border: 1px solid #333300;
+  border-left: 3px solid var(--yellow);
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  line-height: 1.8;
+}
+
+.tip-box.hidden { display: none; }
+.tip-box strong { color: var(--yellow); }
+
+/* ── Form card ── */
+.form-card {
+  background-color: var(--surf);
+  border: 1px solid var(--brd);
+  border-top: 3px solid var(--yellow);
+  padding: 20px;
+  margin-bottom: 28px;
+  position: relative;
+}
+
+.form-tag {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  background-color: var(--yellow);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 2px 10px;
+  font-weight: 700;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.form-full { grid-column: 1 / -1; }
+
+.field-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.field-input {
+  display: block;
+  width: 100%;
+  background-color: var(--bg);
+  border: 1px solid var(--brd2);
+  color: var(--text);
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+  transition: border-color 0.15s;
+}
+
+.field-input:focus { border-color: var(--yellow); }
+
+.field-select {
+  display: block;
+  width: 100%;
+  background-color: var(--bg);
+  border: 1px solid var(--brd2);
+  color: var(--text);
+  padding: 10px 32px 10px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  background-color: var(--yellow);
+  color: var(--bg);
+  border: none;
+  padding: 11px 22px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
+
+.btn-ghost {
+  background-color: var(--surf2);
+  color: var(--muted);
+  border: 1px solid var(--brd2);
+  padding: 11px 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+}
+
+.btn-tiny {
+  background-color: var(--surf2);
+  color: var(--muted);
+  border: 1px solid var(--brd);
+  padding: 5px 11px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+  white-space: nowrap;
+}
+
+.btn-danger {
+  background-color: #160404;
+  color: #cc4444;
+  border: 1px solid #331111;
+  padding: 5px 11px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+  white-space: nowrap;
+}
+
+/* ── Section label ── */
+.sec-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--yellow);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* ── Monitor card ── */
+.monitor-card {
+  background-color: var(--surf);
+  border: 1px solid var(--brd);
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: start;
+}
+
+.monitor-card.is-changed { border-color: var(--red); box-shadow: 0 0 20px rgba(255,58,58,0.12); }
+.monitor-card.is-error   { border-color: var(--warn); }
+
+.card-name {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 4px;
+  letter-spacing: 0.2px;
+}
+
+.card-url {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  word-break: break-all;
+  margin-bottom: 10px;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-bottom: 6px;
+}
+
+.card-meta-item {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 16px;
+}
+
+.card-meta-val { color: var(--dim); }
+
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  min-width: 100px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* status colours applied via JS inline styles */
+
+.card-checking {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--yellow);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { display: inline-block; animation: spin 1s linear infinite; }
+
+.card-snippet {
+  margin-top: 10px;
+  background-color: var(--bg);
+  border: 1px solid var(--brd2);
+  padding: 12px 14px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.7;
+}
+
+.card-snippet.is-found { border-color: var(--red); }
+
+.snip-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.snip-label.is-found { color: var(--red); }
+
+.snip-hit {
+  color: var(--bg);
+  background-color: var(--yellow);
+  padding: 1px 3px;
+  font-weight: 700;
+}
+
+.card-error-msg {
+  margin-top: 8px;
+  background-color: var(--bg);
+  border: 1px solid var(--warn);
+  padding: 8px 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--warn);
+}
+
+/* ── Screenshot ── */
+.card-screenshot {
+  margin-top: 12px;
+  border: 2px solid var(--red);
+  overflow: hidden;
+}
+.screenshot-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: var(--red);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #000;
+}
+.screenshot-label span { color: rgba(0,0,0,0.45); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.screenshot-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.screenshot-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.screenshot-panel + .screenshot-panel {
+  border-left: 2px solid var(--red);
+}
+.screenshot-panel-label {
+  padding: 5px 10px;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background-color: var(--surf2);
+  border-bottom: 1px solid var(--brd);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.screenshot-panel-label.before { color: var(--muted); }
+.screenshot-panel-label.after  { color: var(--red); }
+.screenshot-img-wrap {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background-color: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.screenshot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.screenshot-img.loaded { opacity: 1; }
+.screenshot-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: 10px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.screenshot-footer {
+  padding: 6px 12px;
+  font-family: var(--sans);
+  font-size: 10px;
+  color: var(--muted);
+  background-color: var(--surf2);
+  border-top: 1px solid var(--brd);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.screenshot-footer a { color: var(--yellow); text-decoration: none; font-weight: 500; }
+
+/* ── Page preview thumbnail (shown on idle/ok/watching state) ── */
+.card-preview {
+  margin-top: 12px;
+  border: 1px solid var(--brd2);
+  overflow: hidden;
+}
+.card-preview-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  background-color: var(--surf2);
+  border-bottom: 1px solid var(--brd);
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.card-preview-img-wrap {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  background-color: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.card-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.card-preview-img.loaded { opacity: 1; }
+.card-preview-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: 10px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 48px 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--brd2);
+}
+
+.empty-icon {
+  font-size: 48px;
+  color: var(--brd);
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* ── Log ── */
+.log-panel {
+  margin-top: 32px;
+  border: 1px solid var(--brd);
+  border-top: 2px solid var(--brd2);
+}
+
+.log-header {
+  padding: 8px 16px;
+  background-color: var(--surf2);
+  border-bottom: 1px solid var(--brd);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.log-body {
+  max-height: 180px;
+  overflow-y: auto;
+  background-color: var(--bg);
+}
+
+.log-entry {
+  padding: 5px 16px;
+  display: flex;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  border-bottom: 1px solid #0d0d0d;
+}
+
+.log-t   { color: var(--brd2); flex-shrink: 0; }
+.log-drop  { color: var(--red); }
+.log-error { color: var(--warn); }
+.log-ok    { color: var(--green); }
+.log-info  { color: var(--muted); }
+
+/* ── Footer ── */
+.footer {
+  margin-top: 28px;
+  padding-bottom: 24px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--brd2);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* ── Toast ── */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background-color: var(--surf2);
+  border: 1px solid var(--brd);
+  border-left: 3px solid var(--red);
+  padding: 12px 16px;
+  min-width: 260px;
+  max-width: 360px;
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.toast-title { color: var(--red); font-weight: 700; margin-bottom: 4px; }
+.toast-body  { color: var(--muted); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background-color: var(--bg); }
+::-webkit-scrollbar-thumb { background-color: var(--brd2); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">DROP/WATCH</div>
+  <div class="pulse-wrap">
+    <div class="pulse-dot" id="pulse-dot"></div>
+    <span id="pulse-label">IDLE</span>
+  </div>
+</div>
+
+<!-- Ticker -->
+<div class="ticker-wrap">
+  <div class="ticker-inner">
+    <span><em>◈</em> 100% FREE</span>
+    <span><em>◈</em> NO API KEY NEEDED</span>
+    <span><em>◈</em> SET URL + KEYWORD</span>
+    <span><em>◈</em> INSTANT BROWSER ALERTS</span>
+    <span><em>◈</em> NEVER MISS A DROP</span>
+    <span><em>◈</em> 100% FREE</span>
+    <span><em>◈</em> NO API KEY NEEDED</span>
+    <span><em>◈</em> SET URL + KEYWORD</span>
+    <span><em>◈</em> INSTANT BROWSER ALERTS</span>
+    <span><em>◈</em> NEVER MISS A DROP</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Notif banner -->
+  <div class="banner" id="notif-banner">
+    <span>⚠ Enable browser notifications for real-time drop alerts</span>
+    <button class="banner-btn" onclick="requestNotif()">Enable →</button>
+  </div>
+
+  <!-- Proxy bar -->
+  <div class="proxy-bar" id="proxy-bar">
+    <span id="proxy-status">◌ Testing connection…</span>
+    <button class="btn-tiny" onclick="testProxy(true)">Retest</button>
+  </div>
+
+  <!-- Tip box -->
+  <div class="tip-box hidden" id="proxy-tip">
+    <strong>⚠ Proxy blocked?</strong> Try: <strong>1)</strong> Disable your ad-blocker &nbsp;
+    <strong>2)</strong> Turn off VPN &nbsp;
+    <strong>3)</strong> Try a different network &nbsp;
+    <strong>4)</strong> Some sites block all scrapers — test with another URL first.
+  </div>
+
+  <!-- Form -->
+  <div class="form-card">
+    <div class="form-tag">NEW MONITOR</div>
+    <div class="form-grid">
+      <div class="form-full">
+        <label class="field-label">Monitor Name (optional)</label>
+        <input class="field-input" type="text" id="f-name" placeholder="e.g. Nike Dunk Low Drop"/>
+      </div>
+      <div class="form-full">
+        <label class="field-label">Page URL to Monitor</label>
+        <input class="field-input" type="url" id="f-url" placeholder="https://store.example.com/product/..."/>
+      </div>
+      <div>
+        <label class="field-label">Keyword — alert fires when it APPEARS</label>
+        <input class="field-input" type="text" id="f-keyword" placeholder="Add to Cart"/>
+      </div>
+      <div>
+        <label class="field-label">Check Interval</label>
+        <select class="field-select" id="f-interval">
+          <option value="30">Every 30 seconds</option>
+          <option value="60" selected>Every 1 minute</option>
+          <option value="120">Every 2 minutes</option>
+          <option value="300">Every 5 minutes</option>
+          <option value="600">Every 10 minutes</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="addMonitor()">+ Add Monitor</button>
+      <button class="btn-ghost"   onclick="clearForm()">Clear</button>
+      <button class="btn-ghost"   onclick="testKeyword()">Test URL</button>
+    </div>
+  </div>
+
+  <!-- Monitor list -->
+  <div class="sec-label" id="sec-label">MONITORS — 0</div>
+  <div id="monitors-list">
+    <div class="empty-state">
+      <span class="empty-icon">◎</span>
+      No monitors yet. Add a URL above.
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="log-panel">
+    <div class="log-header">
+      Activity Log
+      <button class="btn-tiny" onclick="clearLog()">Clear</button>
+    </div>
+    <div class="log-body" id="log-body">
+      <div class="log-entry log-info">
+        <span class="log-t">--:--:--</span>
+        <span>DROP/WATCH ready. 100% free.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">DROP/WATCH — 100% FREE — KEEP THIS TAB OPEN TO MONITOR</div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ── CORS Proxies ────────────────────────────────────────────────────────────
+const PROXIES = [
+  {
+    name: "allorigins",
+    build: url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&timestamp=${Date.now()}`,
+    parse: async res => { const d = await res.json(); return d.contents || ""; }
+  },
+  {
+    name: "allorigins-raw",
+    build: url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}&timestamp=${Date.now()}`,
+    parse: async res => res.text()
+  },
+  {
+    name: "corsproxy.io",
+    build: url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    parse: async res => res.text()
+  },
+  {
+    name: "thingproxy",
+    build: url => `https://thingproxy.freeboard.io/fetch/${url}`,
+    parse: async res => res.text()
+  },
+  {
+    name: "codetabs",
+    build: url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+    parse: async res => res.text()
+  },
+];
+
+let workingProxy = null;
+
+async function tryProxy(proxy, url) {
+  const res = await fetch(proxy.build(url), { signal: AbortSignal.timeout(12000) });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const html = await proxy.parse(res);
+  if (!html || html.length < 50) throw new Error("Empty response");
+  return html;
+}
+
+async function fetchPage(url) {
+  if (workingProxy) {
+    try { return await tryProxy(workingProxy, url); }
+    catch(e) { workingProxy = null; }
+  }
+  for (const proxy of PROXIES) {
+    try {
+      const html = await tryProxy(proxy, url);
+      workingProxy = proxy;
+      return html;
+    } catch(e) {}
+  }
+  throw new Error("All proxies failed");
+}
+
+function extractText(html) {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function checkPage(url, keyword) {
+  const html = await fetchPage(url);
+  const text = extractText(html);
+  const idx  = text.toLowerCase().indexOf(keyword.toLowerCase());
+  const found = idx !== -1;
+  const snippet = found
+    ? text.slice(Math.max(0, idx - 60), idx + keyword.length + 100).trim()
+    : "";
+  return { found, snippet };
+}
+
+// ── Proxy test ──────────────────────────────────────────────────────────────
+async function testProxy(manual) {
+  setProxyBar("testing", "◌ Testing connection…");
+  try {
+    await fetchPage("https://example.com");
+    setProxyBar("ok", "✓ Connected via " + (workingProxy ? workingProxy.name : "proxy"));
+    document.getElementById("proxy-tip").classList.add("hidden");
+    if (manual) addLog("ok", "Proxy test passed.");
+  } catch(e) {
+    setProxyBar("fail", "✗ All proxies failed — see tips below");
+    document.getElementById("proxy-tip").classList.remove("hidden");
+    if (manual) addLog("error", "Proxy test failed: " + e.message);
+  }
+}
+
+function setProxyBar(state, msg) {
+  const bar = document.getElementById("proxy-bar");
+  bar.className = "proxy-bar" + (state === "ok" ? " ok" : state === "fail" ? " fail" : "");
+  document.getElementById("proxy-status").textContent = msg;
+}
+
+testProxy(false);
+
+// ── State ───────────────────────────────────────────────────────────────────
+const monitors = {};
+const timers   = {};
+let   logs     = [{ t:"--:--:--", type:"info", msg:"DROP/WATCH ready." }];
+
+// ── Notifications ───────────────────────────────────────────────────────────
+function checkNotifBanner() {
+  document.getElementById("notif-banner").classList.toggle("hidden", Notification.permission === "granted");
+}
+async function requestNotif() {
+  await Notification.requestPermission();
+  checkNotifBanner();
+  addLog("ok", "Notifications " + (Notification.permission === "granted" ? "enabled." : "blocked."));
+}
+checkNotifBanner();
+
+// ── Sound ───────────────────────────────────────────────────────────────────
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [550, 770, 990].forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = "square"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.13);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.13 + 0.18);
+      o.start(ctx.currentTime + i * 0.13);
+      o.stop(ctx.currentTime + i * 0.13 + 0.25);
+    });
+  } catch(_) {}
+}
+
+// ── Alert ───────────────────────────────────────────────────────────────────
+function fireAlert(m, snippet) {
+  m.afterTime = Date.now();
+  addLog("drop", "🔥 DROP: [" + m.name + "] — \"" + m.keyword + "\" appeared!");
+  playBeep();
+  showToast("🔥 DROP — " + m.name, '"' + m.keyword + '" just appeared! Tap to open.', m.url);
+  if (Notification.permission === "granted") {
+    new Notification("🔥 DROP — " + m.name, {
+      body: '"' + m.keyword + '" just appeared!\n' + m.url,
+      requireInteraction: true
+    });
+  }
+}
+
+// ── Check ───────────────────────────────────────────────────────────────────
+async function runCheck(id) {
+  const m = monitors[id];
+  if (!m || m.paused) return;
+  m.status = "checking";
+  renderCard(id);
+  try {
+    const { found, snippet } = await checkPage(m.url, m.keyword);
+    const isFirst = m.lastFound === null;
+    if (isFirst) {
+      m.beforeTime = Date.now(); // capture baseline screenshot time
+      addLog(found ? "drop" : "ok",
+        "[" + m.name + "] Baseline: \"" + m.keyword + "\" " + (found ? "PRESENT" : "absent"));
+      if (found) fireAlert(m, snippet);
+    } else if (!m.lastFound && found) {
+      fireAlert(m, snippet);
+    } else {
+      addLog("ok", "[" + m.name + "] Checked — " + (found ? "present" : "absent") + ", no change");
+    }
+    m.lastFound   = found;
+    m.snippet     = snippet;
+    m.lastChecked = ts();
+    m.status      = found ? "changed" : "ok";
+    m.err         = "";
+    setProxyBar("ok", "✓ Connected via " + (workingProxy ? workingProxy.name : "proxy"));
+  } catch(e) {
+    addLog("error", "[" + m.name + "] " + e.message);
+    m.status = "error";
+    m.err    = e.message;
+    workingProxy = null;
+    setProxyBar("fail", "✗ Proxy error — will retry");
+  }
+  renderCard(id);
+  updatePulse();
+}
+
+function startTimer(id) {
+  clearInterval(timers[id]);
+  runCheck(id);
+  timers[id] = setInterval(function() { runCheck(id); }, monitors[id].interval * 1000);
+}
+function stopTimer(id) { clearInterval(timers[id]); delete timers[id]; }
+
+// ── Actions ─────────────────────────────────────────────────────────────────
+function addMonitor() {
+  const url      = document.getElementById("f-url").value.trim();
+  const keyword  = document.getElementById("f-keyword").value.trim();
+  const name     = document.getElementById("f-name").value.trim();
+  const interval = parseInt(document.getElementById("f-interval").value);
+  if (!url)     return addLog("error", "Please enter a URL.");
+  if (!keyword) return addLog("error", "Please enter a keyword.");
+  const id = "m" + Date.now().toString(36);
+  monitors[id] = { id: id, name: name || url, url: url, keyword: keyword,
+    interval: interval, status: "idle", lastFound: null,
+    snippet: "", lastChecked: null,
+    previewTime: Date.now(),
+    beforeTime: null, afterTime: null,
+    paused: false, err: "" };
+  addLog("ok", "Monitor added: " + monitors[id].name);
+  clearForm();
+  renderMonitors();
+  setTimeout(function() { startTimer(id); }, 80);
+  updatePulse();
+}
+
+function deleteMonitor(id) {
+  stopTimer(id);
+  const name = monitors[id] ? monitors[id].name : "";
+  delete monitors[id];
+  addLog("ok", "Deleted: " + name);
+  renderMonitors();
+  updatePulse();
+}
+
+function togglePause(id) {
+  const m = monitors[id];
+  if (!m) return;
+  if (m.paused) {
+    m.paused = false; m.status = "idle";
+    addLog("ok", "Resumed: " + m.name);
+    setTimeout(function() { startTimer(id); }, 80);
+  } else {
+    stopTimer(id); m.paused = true; m.status = "paused";
+    addLog("ok", "Paused: " + m.name);
+    renderCard(id);
+  }
+  updatePulse();
+}
+
+async function testKeyword() {
+  const url     = document.getElementById("f-url").value.trim();
+  const keyword = document.getElementById("f-keyword").value.trim();
+  if (!url)     return addLog("error", "Enter a URL to test.");
+  if (!keyword) return addLog("error", "Enter a keyword to test.");
+  addLog("info", "Testing \"" + keyword + "\" on " + url + " …");
+  try {
+    const { found, snippet } = await checkPage(url, keyword);
+    if (found) addLog("ok", "✓ Keyword FOUND. Snippet: …" + snippet.slice(0, 80) + "…");
+    else       addLog("ok", "◌ Keyword not found yet — monitor will alert when it appears.");
+  } catch(e) {
+    addLog("error", "Test failed: " + e.message);
+  }
+}
+
+// ── Status styles ───────────────────────────────────────────────────────────
+const SM = {
+  idle:     { color:"#555",    bg:"#111",    bd:"#2e2e2e", label:"IDLE"        },
+  checking: { color:"#d4f700", bg:"#141400", bd:"#d4f700", label:"CHECKING…"   },
+  ok:       { color:"#00e676", bg:"#001209", bd:"#00e67633",label:"✓ WATCHING" },
+  changed:  { color:"#ff3a3a", bg:"#130000", bd:"#ff3a3a", label:"⚡ DROPPED!" },
+  paused:   { color:"#555",    bg:"#0e0e0e", bd:"#2e2e2e", label:"⏸ PAUSED"   },
+  error:    { color:"#ff9f1c", bg:"#110900", bd:"#ff9f1c", label:"⚠ ERROR"     },
+};
+
+// ── Image load helpers (named functions avoid inline quote escaping issues) ──
+function imgLoaded(imgEl, loaderId) {
+  imgEl.classList.add('loaded');
+  var l = document.getElementById(loaderId);
+  if (l) l.style.display = 'none';
+}
+function imgFailed(imgEl, loaderId, msg) {
+  // Try next screenshot service before giving up
+  var url = imgEl.dataset.shotUrl;
+  var t   = imgEl.dataset.shotT;
+  var idx = parseInt(imgEl.dataset.serviceIndex || "0") + 1;
+  if (url && t && idx < SHOT_SERVICES.length) {
+    imgEl.dataset.serviceIndex = idx;
+    imgEl.src = SHOT_SERVICES[idx](url, t);
+    return;
+  }
+  imgEl.style.display = 'none';
+  var l = document.getElementById(loaderId);
+  if (l) l.innerHTML = msg || '⚠ Screenshot unavailable';
+}
+
+// ── Page preview (shown immediately when monitor is added) ───────────────────
+function buildPreviewHtml(m) {
+  if (!m.previewTime) return "";
+  if (m.status === "changed") return "";
+  var src    = shotUrl(m.url, m.previewTime);
+  var loadId = "prev-load-" + m.id;
+  var imgId  = "prev-img-"  + m.id;
+  return '<div class="card-preview">'
+    + '<div class="card-preview-label">🌐 Page Preview</div>'
+    + '<div class="card-preview-img-wrap">'
+    +   '<div class="card-preview-loading" id="' + loadId + '"><span class="spin">◌</span> Loading preview…</div>'
+    +   '<img class="card-preview-img" id="' + imgId + '" src="' + src + '" alt="Page preview" '
+    +     'data-shot-url="' + m.url + '" data-shot-t="' + m.previewTime + '" data-service-index="0" '
+    +     'onload="imgLoaded(this,' + JSON.stringify(loadId) + ')" '
+    +     'onerror="imgFailed(this,' + JSON.stringify(loadId) + ')" />'
+    + '</div>'
+    + '</div>';
+}
+
+// ── Screenshot ───────────────────────────────────────────────────────────────
+// Screenshot services tried in order — first to load wins
+var SHOT_SERVICES = [
+  function(url, t) { return "https://image.thum.io/get/width/1200/crop/800/noanimate/" + url + "?t=" + t; },
+  function(url, t) { return "https://api.screenshotone.com/take?url=" + encodeURIComponent(url) + "&viewport_width=1280&viewport_height=800&format=jpg&t=" + t; },
+  function(url, t) { return "https://shot.screenshotapi.net/screenshot?token=&url=" + encodeURIComponent(url) + "&width=1280&height=800&output=image&t=" + t; },
+  function(url, t) { return "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(url) + "?w=1200&t=" + t; },
+];
+
+function shotUrl(url, t) {
+  // Default to first service; fallback handled by imgFailed
+  return SHOT_SERVICES[0](url, t);
+}
+
+// Try next screenshot service if current one fails
+function tryNextShot(imgEl, loaderId, url, t, serviceIndex) {
+  serviceIndex = serviceIndex || 1;
+  if (serviceIndex >= SHOT_SERVICES.length) {
+    imgEl.style.display = 'none';
+    var l = document.getElementById(loaderId);
+    if (l) l.innerHTML = '⚠ Screenshot unavailable — <a href="' + url + '" target="_blank" style="color:#d4f700">open page</a>';
+    return;
+  }
+  imgEl.src = SHOT_SERVICES[serviceIndex](url, t);
+  imgEl.dataset.serviceIndex = serviceIndex;
+}
+
+function shotPanel(label, cssClass, url, t, panelId) {
+  var loadId = panelId + "-load";
+  var imgId  = panelId + "-img";
+  return '<div class="screenshot-panel">'
+    + '<div class="screenshot-panel-label ' + cssClass + '">' + label + '</div>'
+    + '<div class="screenshot-img-wrap">'
+    +   '<div class="screenshot-loading" id="' + loadId + '"><span class="spin">◌</span> Loading…</div>'
+    +   '<img class="screenshot-img" id="' + imgId + '" src="' + shotUrl(url, t) + '" alt="screenshot" '
+    +     'data-shot-url="' + url + '" data-shot-t="' + t + '" data-service-index="0" '
+    +     'onload="imgLoaded(this,' + JSON.stringify(loadId) + ')" '
+    +     'onerror="imgFailed(this,' + JSON.stringify(loadId) + ')" />'
+    + '</div>'
+    + '</div>';
+}
+
+function buildScreenshotHtml(m) {
+  if (m.status !== "changed" || !m.afterTime) return "";
+  var beforeT  = m.beforeTime || m.afterTime;
+  var afterT   = m.afterTime;
+  var beforeStr = new Date(beforeT).toTimeString().slice(0, 8);
+  var afterStr  = new Date(afterT).toTimeString().slice(0, 8);
+  return '<div class="card-screenshot">'
+    + '<div class="screenshot-label">📸 Before & After <span>page captured at each stage</span></div>'
+    + '<div class="screenshot-panels">'
+    +   shotPanel("⬜ Before — " + beforeStr, "before", m.url, beforeT, "shot-before-" + m.id)
+    +   shotPanel("🔴 After — " + afterStr,  "after",  m.url, afterT,  "shot-after-"  + m.id)
+    + '</div>'
+    + '<div class="screenshot-footer">'
+    +   '<span>Drop detected at ' + afterStr + '</span>'
+    +   '<a href="' + m.url + '" target="_blank">Open page ↗</a>'
+    + '</div>'
+    + '</div>';
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function renderMonitors() {
+  const list = document.getElementById("monitors-list");
+  const ids  = Object.keys(monitors);
+  document.getElementById("sec-label").textContent = "MONITORS — " + ids.length;
+  if (ids.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="empty-icon">◎</span>No monitors yet. Add a URL above.</div>';
+    return;
+  }
+  list.innerHTML = "";
+  ids.forEach(function(id) {
+    const div = document.createElement("div");
+    div.id = "card-" + id;
+    list.appendChild(div);
+    renderCard(id, div);
+  });
+}
+
+function renderCard(id, el) {
+  el = el || document.getElementById("card-" + id);
+  if (!el) return;
+  const m = monitors[id];
+  const s = SM[m.status] || SM.idle;
+
+  var cls = "monitor-card";
+  if (m.status === "changed") cls += " is-changed";
+  if (m.status === "error")   cls += " is-error";
+  el.className = cls;
+
+  var meta = "";
+  meta += '<span class="card-meta-item">KEYWORD <span class="card-meta-val">"' + esc(m.keyword) + '"</span></span>';
+  meta += '<span class="card-meta-item">EVERY <span class="card-meta-val">' + m.interval + 's</span></span>';
+  if (m.lastChecked) {
+    meta += '<span class="card-meta-item">LAST <span class="card-meta-val">' + m.lastChecked + '</span></span>';
+  }
+
+  var extra = "";
+  if (m.status === "checking") {
+    extra = '<div class="card-checking"><span class="spin">◌</span> Fetching page…</div>';
+  } else if ((m.status === "ok" || m.status === "changed") && m.snippet) {
+    var isFound = m.status === "changed";
+    extra = '<div class="card-snippet' + (isFound ? ' is-found' : '') + '">'
+      + '<span class="snip-label' + (isFound ? ' is-found' : '') + '">'
+      + (isFound ? '⚡ KEYWORD FOUND ON PAGE' : '◎ PAGE SNAPSHOT') + '</span>'
+      + '<span class="snip-text">…' + highlightKeyword(m.snippet, m.keyword) + '…</span>'
+      + '</div>'
+      + buildScreenshotHtml(m);
+  } else if (m.status === "error" && m.err) {
+    extra = '<div class="card-error-msg">⚠ ' + esc(m.err) + '</div>';
+  }
+  extra = buildPreviewHtml(m) + extra;
+
+  el.innerHTML =
+    '<div>'
+    + '<div class="card-name">' + esc(m.name) + '</div>'
+    + '<div class="card-url">'  + esc(m.url)  + '</div>'
+    + '<div class="card-meta">' + meta + '</div>'
+    + extra
+    + '</div>'
+    + '<div class="card-actions">'
+    + '<span class="status-badge" style="color:' + s.color + ';background-color:' + s.bg + ';border-color:' + s.bd + '">' + s.label + '</span>'
+    + '<button class="btn-tiny"   onclick="togglePause(\'' + id + '\')">' + (m.paused ? "Resume" : "Pause") + '</button>'
+    + '<button class="btn-tiny"   onclick="window.open(\'' + esc(m.url) + '\',\'_blank\')">Open ↗</button>'
+    + '<button class="btn-danger" onclick="deleteMonitor(\'' + id + '\')">Delete</button>'
+    + '</div>';
+}
+
+function highlightKeyword(snippet, keyword) {
+  const escapedSnippet = esc(snippet);
+  const escapedKw = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return escapedSnippet.replace(
+    new RegExp("(" + esc(escapedKw) + ")", "gi"),
+    '<span class="snip-hit">$1</span>'
+  );
+}
+
+// ── Log ──────────────────────────────────────────────────────────────────────
+function addLog(type, msg) {
+  logs.unshift({ t: ts(), type: type, msg: msg });
+  if (logs.length > 100) logs.pop();
+  const body = document.getElementById("log-body");
+  body.innerHTML = logs.map(function(l) {
+    return '<div class="log-entry log-' + l.type + '">'
+      + '<span class="log-t">' + l.t + '</span>'
+      + '<span>' + esc(l.msg) + '</span>'
+      + '</div>';
+  }).join("");
+}
+
+function clearLog() {
+  logs = [];
+  document.getElementById("log-body").innerHTML = "";
+}
+
+// ── Pulse ────────────────────────────────────────────────────────────────────
+function updatePulse() {
+  const active = Object.values(monitors).filter(function(m) { return !m.paused; }).length;
+  document.getElementById("pulse-label").textContent = active > 0 ? active + " WATCHING" : "IDLE";
+  document.getElementById("pulse-dot").classList.toggle("on", active > 0);
+}
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+function showToast(title, body, url) {
+  const c = document.getElementById("toast-container");
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.innerHTML = '<div class="toast-title">' + esc(title) + '</div><div class="toast-body">' + esc(body) + '</div>';
+  if (url) t.onclick = function() { window.open(url, "_blank"); };
+  c.appendChild(t);
+  setTimeout(function() {
+    t.style.transition = "opacity .4s";
+    t.style.opacity = "0";
+    setTimeout(function() { t.remove(); }, 400);
+  }, 10000);
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function ts() { return new Date().toTimeString().slice(0, 8); }
+function esc(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+function clearForm() {
+  document.getElementById("f-name").value = "";
+  document.getElementById("f-url").value = "";
+  document.getElementById("f-keyword").value = "";
+  document.getElementById("f-interval").value = "60";
+}
+</script>
+</body>
+</html>
