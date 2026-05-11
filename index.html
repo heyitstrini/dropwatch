@@ -476,7 +476,7 @@ body {
   color: var(--warn);
 }
 
-/* ── Screenshot ── */
+/* ── Before/After screenshot (iframe) ── */
 .card-screenshot {
   margin-top: 12px;
   border: 2px solid var(--red);
@@ -495,19 +495,16 @@ body {
   text-transform: uppercase;
   color: #000;
 }
-.screenshot-label span { color: rgba(0,0,0,0.45); font-weight: 400; text-transform: none; letter-spacing: 0; }
+.screenshot-label span { color: rgba(0,0,0,0.5); font-weight: 400; text-transform: none; letter-spacing: 0; }
 .screenshot-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
 }
 .screenshot-panel {
-  position: relative;
   display: flex;
   flex-direction: column;
 }
-.screenshot-panel + .screenshot-panel {
-  border-left: 2px solid var(--red);
-}
+.screenshot-panel + .screenshot-panel { border-left: 2px solid var(--red); }
 .screenshot-panel-label {
   padding: 5px 10px;
   font-family: var(--sans);
@@ -517,45 +514,40 @@ body {
   text-transform: uppercase;
   background-color: var(--surf2);
   border-bottom: 1px solid var(--brd);
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 .screenshot-panel-label.before { color: var(--muted); }
 .screenshot-panel-label.after  { color: var(--red); }
-.screenshot-img-wrap {
+.screenshot-panel-wrap {
   position: relative;
   width: 100%;
-  height: 180px;
+  height: 200px;
   background-color: #0a0a0a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
 }
-.screenshot-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-  display: block;
-  opacity: 0;
-  transition: opacity 0.5s;
+.screenshot-panel-wrap iframe {
+  width: 200%;
+  height: 200%;
+  transform: scale(0.5);
+  transform-origin: top left;
+  border: none;
+  pointer-events: none;
 }
-.screenshot-img.loaded { opacity: 1; }
-.screenshot-loading {
+.screenshot-panel-blocked {
   position: absolute;
   inset: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
   font-family: var(--sans);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--muted);
-  pointer-events: none;
+  background-color: #0a0a0a;
+  text-align: center;
+  padding: 12px;
+  flex-direction: column;
+  gap: 8px;
 }
+.screenshot-panel-blocked a { color: var(--yellow); text-decoration: none; }
 .screenshot-footer {
   padding: 6px 12px;
   font-family: var(--sans);
@@ -569,7 +561,7 @@ body {
 }
 .screenshot-footer a { color: var(--yellow); text-decoration: none; font-weight: 500; }
 
-/* ── Page preview thumbnail (shown on idle/ok/watching state) ── */
+/* ── Page preview (iframe embed) ── */
 .card-preview {
   margin-top: 12px;
   border: 1px solid var(--brd2);
@@ -579,49 +571,46 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 10px;
+  padding: 6px 12px;
   background-color: var(--surf2);
   border-bottom: 1px solid var(--brd);
   font-family: var(--sans);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--muted);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
 }
-.card-preview-img-wrap {
+.card-preview-wrap {
   position: relative;
   width: 100%;
-  height: 140px;
+  height: 220px;
   background-color: #0a0a0a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
 }
-.card-preview-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top center;
-  display: block;
-  opacity: 0;
-  transition: opacity 0.5s;
-}
-.card-preview-img.loaded { opacity: 1; }
-.card-preview-loading {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-family: var(--sans);
-  font-size: 10px;
-  color: var(--muted);
+/* Scale the iframe down so it looks like a thumbnail */
+.card-preview-wrap iframe {
+  width: 200%;
+  height: 200%;
+  transform: scale(0.5);
+  transform-origin: top left;
+  border: none;
   pointer-events: none;
 }
+.card-preview-blocked {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #0a0a0a;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  padding: 20px;
+}
+.card-preview-blocked a { color: var(--yellow); text-decoration: none; font-weight: 600; }
 
 /* ── Empty state ── */
 .empty-state {
@@ -1096,105 +1085,69 @@ const SM = {
   error:    { color:"#ff9f1c", bg:"#110900", bd:"#ff9f1c", label:"⚠ ERROR"     },
 };
 
-// ── Image load helpers (named functions avoid inline quote escaping issues) ──
-function imgLoaded(imgEl, loaderId) {
-  // WordPress mshots returns a small grey placeholder while rendering
-  // Detect it by checking natural dimensions — placeholder is exactly 400x300 or very small
-  if (imgEl.naturalWidth <= 400 && imgEl.naturalHeight <= 300) {
-    // Still a placeholder — retry after 3 seconds
-    var url     = imgEl.dataset.shotUrl;
-    var attempts = parseInt(imgEl.dataset.attempts || "0") + 1;
-    imgEl.dataset.attempts = attempts;
-    if (attempts < 8 && url) {
-      setTimeout(function() {
-        imgEl.src = "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(url) + "?w=1200&h=800&cb=" + Date.now();
-      }, 3000);
-    } else {
-      imgEl.style.display = 'none';
-      var l = document.getElementById(loaderId);
-      if (l) l.innerHTML = '⚠ Screenshot timed out — <a href="' + url + '" target="_blank" style="color:#d4f700;text-decoration:underline">open page ↗</a>';
-    }
-    return;
-  }
-  // Real screenshot loaded
-  imgEl.classList.add('loaded');
-  var l = document.getElementById(loaderId);
-  if (l) l.style.display = 'none';
-}
-function imgFailed(imgEl, loaderId, msg) {
-  var url = imgEl.dataset.shotUrl;
-  imgEl.style.display = 'none';
-  var l = document.getElementById(loaderId);
-  if (l) l.innerHTML = '⚠ Screenshot unavailable' + (url ? ' — <a href="' + url + '" target="_blank" style="color:#d4f700;text-decoration:underline">open page ↗</a>' : '');
-}
+// ── Preview & Screenshot via iframe ──────────────────────────────────────────
+// Many sites block iframes (X-Frame-Options). We detect this and show a fallback.
+// The iframe is scaled to 50% to look like a thumbnail.
 
-// ── Page preview (shown immediately when monitor is added) ───────────────────
-function buildPreviewHtml(m) {
-  if (!m.previewTime) return "";
-  if (m.status === "changed") return "";
-  var src    = shotUrl(m.url);
-  var loadId = "prev-load-" + m.id;
-  var imgId  = "prev-img-"  + m.id;
-  return '<div class="card-preview">'
-    + '<div class="card-preview-label">🌐 Page Preview</div>'
-    + '<div class="card-preview-img-wrap">'
-    +   '<div class="card-preview-loading" id="' + loadId + '"><span class="spin">◌</span> Loading preview…</div>'
-    +   '<img class="card-preview-img" id="' + imgId + '" src="' + src + '" alt="Page preview" '
-    +     'data-shot-url="' + m.url + '" data-attempts="0" '
-    +     'onload="imgLoaded(this,' + JSON.stringify(loadId) + ')" '
-    +     'onerror="imgFailed(this,' + JSON.stringify(loadId) + ')" />'
+function iframePanel(label, cssClass, url, panelId) {
+  var blockedId = panelId + "-blocked";
+  // onload fires even if blocked — we detect it via a timeout check
+  return '<div class="screenshot-panel">'
+    + '<div class="screenshot-panel-label ' + cssClass + '">' + label + '</div>'
+    + '<div class="screenshot-panel-wrap">'
+    +   '<iframe src="' + url + '" scrolling="no" '
+    +     'onload="iframeLoaded(this,' + JSON.stringify(blockedId) + ')" '
+    +     'onerror="iframeBlocked(this,' + JSON.stringify(blockedId) + ',' + JSON.stringify(url) + ')"></iframe>'
+    +   '<div class="screenshot-panel-blocked" id="' + blockedId + '" style="display:none">'
+    +     '🔒 Site blocks previews<br><a href="' + url + '" target="_blank">Open page directly ↗</a>'
+    +   '</div>'
     + '</div>'
     + '</div>';
 }
 
-// ── Screenshot ───────────────────────────────────────────────────────────────
-// Screenshot via WordPress mshots — free, no key, very reliable
-// First request generates the shot (returns placeholder), second request returns real image
-// We poll every 3 seconds up to 5 times until the real image loads
-function shotUrl(url) {
-  return "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(url) + "?w=1200&h=800";
-}
-
-function pollShot(imgEl, loaderId, url, attempts) {
-  attempts = attempts || 0;
-  if (attempts > 8) {
-    // Give up — show fallback
-    imgEl.style.display = 'none';
-    var l = document.getElementById(loaderId);
-    if (l) l.innerHTML = '⚠ Screenshot timed out — <a href="' + url + '" target="_blank" style="color:#d4f700;text-decoration:underline">open page directly ↗</a>';
-    return;
+function iframeLoaded(iframeEl, blockedId) {
+  // Try to access contentDocument — throws if cross-origin blocked
+  try {
+    var doc = iframeEl.contentDocument || iframeEl.contentWindow.document;
+    if (!doc || doc.body === null) throw new Error("blocked");
+  } catch(e) {
+    iframeBlocked(iframeEl, blockedId, iframeEl.src);
   }
-  // Bust cache to force a fresh check
-  var sep = url.indexOf('?') >= 0 ? '&' : '?';
-  imgEl.src = "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(url) + "?w=1200&h=800&cb=" + (Date.now());
 }
 
-function shotPanel(label, cssClass, url, panelId) {
-  var loadId = panelId + "-load";
-  var imgId  = panelId + "-img";
-  return '<div class="screenshot-panel">'
-    + '<div class="screenshot-panel-label ' + cssClass + '">' + label + '</div>'
-    + '<div class="screenshot-img-wrap">'
-    +   '<div class="screenshot-loading" id="' + loadId + '"><span class="spin">◌</span> Generating screenshot…</div>'
-    +   '<img class="screenshot-img" id="' + imgId + '" src="' + shotUrl(url) + '" alt="screenshot" '
-    +     'data-shot-url="' + url + '" data-attempts="0" '
-    +     'onload="imgLoaded(this,' + JSON.stringify(loadId) + ')" '
-    +     'onerror="imgFailed(this,' + JSON.stringify(loadId) + ')" />'
+function iframeBlocked(iframeEl, blockedId, url) {
+  iframeEl.style.display = 'none';
+  var b = document.getElementById(blockedId);
+  if (b) b.style.display = 'flex';
+}
+
+function buildPreviewHtml(m) {
+  if (!m.previewTime) return "";
+  if (m.status === "changed") return "";
+  var blockedId = "prev-blocked-" + m.id;
+  return '<div class="card-preview">'
+    + '<div class="card-preview-label">🌐 Page Preview</div>'
+    + '<div class="card-preview-wrap">'
+    +   '<iframe src="' + m.url + '" scrolling="no" '
+    +     'onload="iframeLoaded(this,' + JSON.stringify(blockedId) + ')" '
+    +     'onerror="iframeBlocked(this,' + JSON.stringify(blockedId) + ',' + JSON.stringify(m.url) + ')"></iframe>'
+    +   '<div class="card-preview-blocked" id="' + blockedId + '" style="display:none">'
+    +     '<span>🔒 This site blocks previews</span>'
+    +     '<a href="' + m.url + '" target="_blank">Open page directly ↗</a>'
+    +   '</div>'
     + '</div>'
     + '</div>';
 }
 
 function buildScreenshotHtml(m) {
   if (m.status !== "changed" || !m.afterTime) return "";
-  var beforeT  = m.beforeTime || m.afterTime;
-  var afterT   = m.afterTime;
-  var beforeStr = new Date(beforeT).toTimeString().slice(0, 8);
-  var afterStr  = new Date(afterT).toTimeString().slice(0, 8);
+  var beforeStr = new Date(m.beforeTime || m.afterTime).toTimeString().slice(0, 8);
+  var afterStr  = new Date(m.afterTime).toTimeString().slice(0, 8);
   return '<div class="card-screenshot">'
-    + '<div class="screenshot-label">📸 Before & After <span>page captured at each stage</span></div>'
+    + '<div class="screenshot-label">📸 Before & After <span>live page at each stage</span></div>'
     + '<div class="screenshot-panels">'
-    +   shotPanel("⬜ Before — " + beforeStr, "before", m.url, "shot-before-" + m.id)
-    +   shotPanel("🔴 After — " + afterStr,  "after",  m.url, "shot-after-"  + m.id)
+    +   iframePanel("⬜ Before — " + beforeStr, "before", m.url, "shot-before-" + m.id)
+    +   iframePanel("🔴 After — " + afterStr,  "after",  m.url, "shot-after-"  + m.id)
     + '</div>'
     + '<div class="screenshot-footer">'
     +   '<span>Drop detected at ' + afterStr + '</span>'
