@@ -520,18 +520,24 @@ body {
 .screenshot-panel-wrap {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 280px;
   background-color: #0a0a0a;
   overflow: hidden;
 }
 .screenshot-panel-wrap iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 200%;
   height: 200%;
   transform: scale(0.5);
   transform-origin: top left;
   border: none;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s;
 }
+.screenshot-panel-wrap iframe.visible { opacity: 1; }
 .screenshot-panel-blocked {
   position: absolute;
   inset: 0;
@@ -582,17 +588,36 @@ body {
 .card-preview-wrap {
   position: relative;
   width: 100%;
-  height: 220px;
+  height: 360px;
   background-color: #0a0a0a;
   overflow: hidden;
 }
 /* Scale the iframe down so it looks like a thumbnail */
 .card-preview-wrap iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 200%;
   height: 200%;
   transform: scale(0.5);
   transform-origin: top left;
   border: none;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.card-preview-wrap iframe.visible { opacity: 1; }
+.card-preview-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 12px;
+  color: var(--muted);
   pointer-events: none;
 }
 .card-preview-blocked {
@@ -1090,33 +1115,33 @@ const SM = {
 // The iframe is scaled to 50% to look like a thumbnail.
 
 function iframePanel(label, cssClass, url, panelId) {
-  var blockedId = panelId + "-blocked";
-  // onload fires even if blocked — we detect it via a timeout check
+  var loadId  = panelId + "-load";
+  var blockId = panelId + "-blk";
   return '<div class="screenshot-panel">'
     + '<div class="screenshot-panel-label ' + cssClass + '">' + label + '</div>'
     + '<div class="screenshot-panel-wrap">'
-    +   '<iframe src="' + url + '" scrolling="no" '
-    +     'onload="iframeLoaded(this,' + JSON.stringify(blockedId) + ')" '
-    +     'onerror="iframeBlocked(this,' + JSON.stringify(blockedId) + ',' + JSON.stringify(url) + ')"></iframe>'
-    +   '<div class="screenshot-panel-blocked" id="' + blockedId + '" style="display:none">'
-    +     '🔒 Site blocks previews<br><a href="' + url + '" target="_blank">Open page directly ↗</a>'
+    +   '<div class="screenshot-loading" id="' + loadId + '"><span class="spin">&#9675;</span> Loading&hellip;</div>'
+    +   '<div class="screenshot-panel-blocked" id="' + blockId + '" style="display:none">'
+    +     '&#128274; Site blocks previews &mdash; <a href="' + url + '" target="_blank">Open &#8599;</a>'
     +   '</div>'
+    +   '<iframe src="' + url + '" scrolling="no" '
+    +     'onload="iframeLoaded(this,' + JSON.stringify(loadId) + ',' + JSON.stringify(blockId) + ')" '
+    +     'onerror="iframeBlocked(this,' + JSON.stringify(loadId) + ',' + JSON.stringify(blockId) + ')"></iframe>'
     + '</div>'
     + '</div>';
 }
 
-function iframeLoaded(iframeEl, blockedId) {
-  // Try to access contentDocument — throws if cross-origin blocked
-  try {
-    var doc = iframeEl.contentDocument || iframeEl.contentWindow.document;
-    if (!doc || doc.body === null) throw new Error("blocked");
-  } catch(e) {
-    iframeBlocked(iframeEl, blockedId, iframeEl.src);
-  }
+
+function iframeLoaded(iframeEl, loadingId, blockedId) {
+  iframeEl.classList.add('visible');
+  var l = document.getElementById(loadingId);
+  if (l) l.style.display = 'none';
 }
 
-function iframeBlocked(iframeEl, blockedId, url) {
+function iframeBlocked(iframeEl, loadingId, blockedId, url) {
   iframeEl.style.display = 'none';
+  var l = document.getElementById(loadingId);
+  if (l) l.style.display = 'none';
   var b = document.getElementById(blockedId);
   if (b) b.style.display = 'flex';
 }
@@ -1124,20 +1149,25 @@ function iframeBlocked(iframeEl, blockedId, url) {
 function buildPreviewHtml(m) {
   if (!m.previewTime) return "";
   if (m.status === "changed") return "";
-  var blockedId = "prev-blocked-" + m.id;
+  var loadId  = "prev-load-" + m.id;
+  var blockId = "prev-blk-"  + m.id;
   return '<div class="card-preview">'
-    + '<div class="card-preview-label">🌐 Page Preview</div>'
+    + '<div class="card-preview-label">&#127760; Page Preview</div>'
     + '<div class="card-preview-wrap">'
-    +   '<iframe src="' + m.url + '" scrolling="no" '
-    +     'onload="iframeLoaded(this,' + JSON.stringify(blockedId) + ')" '
-    +     'onerror="iframeBlocked(this,' + JSON.stringify(blockedId) + ',' + JSON.stringify(m.url) + ')"></iframe>'
-    +   '<div class="card-preview-blocked" id="' + blockedId + '" style="display:none">'
-    +     '<span>🔒 This site blocks previews</span>'
-    +     '<a href="' + m.url + '" target="_blank">Open page directly ↗</a>'
+    +   '<div class="card-preview-loading-overlay" id="' + loadId + '">'
+    +     '<span class="spin">&#9675;</span> Loading preview&hellip;'
     +   '</div>'
+    +   '<div class="card-preview-blocked" id="' + blockId + '" style="display:none">'
+    +     '<span>&#128274; This site blocks embedded previews</span>'
+    +     '<a href="' + m.url + '" target="_blank">Open page directly &#8599;</a>'
+    +   '</div>'
+    +   '<iframe src="' + m.url + '" scrolling="no" '
+    +     'onload="iframeLoaded(this,' + JSON.stringify(loadId) + ',' + JSON.stringify(blockId) + ')" '
+    +     'onerror="iframeBlocked(this,' + JSON.stringify(loadId) + ',' + JSON.stringify(blockId) + ')"></iframe>'
     + '</div>'
     + '</div>';
 }
+
 
 function buildScreenshotHtml(m) {
   if (m.status !== "changed" || !m.afterTime) return "";
